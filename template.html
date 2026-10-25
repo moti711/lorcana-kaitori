@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ロルカナ買取比較</title>
+<style>
+:root{--bg:#f6f5f2;--card:#fff;--ink:#1d1d1f;--sub:#6b6b70;--muted:#8d8d92;--line:#e3e1dc;--grid:#ecebe7;--win:#0a7a4b;--winbg:#e3f4ec;--chip:#ecebe7;
+ --s-bf:#2a78d6;--s-cb:#eb6834;--s-lh:#1baf7a;--up:#c2410c;--dn:#2563eb}
+@media (prefers-color-scheme:dark){:root{--bg:#161618;--card:#222226;--ink:#f1f1f3;--sub:#a0a0a8;--muted:#7c7c84;--line:#34343a;--grid:#2c2c31;--win:#5fd39c;--winbg:#1d3a2d;--chip:#2c2c31;
+ --s-bf:#3987e5;--s-cb:#d95926;--s-lh:#199e70;--up:#fb923c;--dn:#60a5fa}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,"Hiragino Sans","Yu Gothic UI",sans-serif}
+header{padding:20px 16px 8px;max-width:1280px;margin:auto}h1{margin:0 0 4px;font-size:22px}.note{color:var(--sub);font-size:12px}
+.bar{position:sticky;top:0;z-index:2;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 16px}
+.bar .in{max-width:1280px;margin:auto;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+button.chip{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:999px;padding:4px 11px;font:inherit;font-size:13px;cursor:pointer}
+button.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+input,select{font:inherit;padding:5px 9px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+input{flex:1;min-width:140px}
+label.lb{font-size:12px;color:var(--sub);display:flex;align-items:center;gap:4px}
+main{max-width:1280px;margin:auto;padding:14px 16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:border-color .15s}
+.c:hover,.c:focus-visible{border-color:var(--sub);outline:none}
+.c img{width:100%;aspect-ratio:5/7;object-fit:cover;background:var(--chip);display:block}
+.b{padding:8px 10px 10px;display:flex;flex-direction:column;gap:4px;flex:1}
+.tag{font-size:11px;color:var(--sub)}.tag .f{color:#b07a00;font-weight:700}
+.n{font-weight:600;font-size:13px;line-height:1.35}
+.p{display:grid;grid-template-columns:auto 1fr;gap:1px 8px;font-size:12px;margin-top:auto}
+.p>span:nth-child(odd){color:var(--sub)}.p>span:nth-child(even){text-align:right;font-variant-numeric:tabular-nums}
+.p .w{color:var(--win);font-weight:700;background:var(--winbg);border-radius:4px;padding:0 4px}
+.up{color:var(--up);font-size:10px;margin-right:3px}.dn{color:var(--dn);font-size:10px;margin-right:3px}
+#cnt{color:var(--sub);font-size:12px;margin-left:auto}
+#more{display:block;margin:0 auto 40px;padding:8px 20px}
+/* 詳細モーダル */
+#modal{position:fixed;inset:0;background:#0009;display:none;align-items:flex-start;justify-content:center;z-index:9;overflow:auto;padding:24px 16px}
+#modal.on{display:flex}
+.sheet{background:var(--card);border-radius:16px;max-width:860px;width:100%;padding:20px;position:relative}
+.close{position:absolute;top:10px;right:12px;border:0;background:none;color:var(--sub);font-size:24px;cursor:pointer;line-height:1}
+.top{display:flex;gap:18px;flex-wrap:wrap}
+.top img{width:180px;max-width:40%;border-radius:10px;align-self:flex-start}
+.top .info{flex:1;min-width:220px}
+.top h2{margin:2px 0 10px;font-size:18px;line-height:1.35}
+.now{display:grid;grid-template-columns:auto auto 1fr;gap:4px 10px;font-size:14px;align-items:center}
+.now .k{width:14px;height:3px;border-radius:2px}
+.now .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+h3{font-size:14px;margin:18px 0 6px}
+.chartwrap{position:relative}
+svg.ch{width:100%;height:auto;display:block;touch-action:none}
+svg.ch text{fill:var(--sub);font-size:11px;font-family:inherit}
+svg.ch .lab{fill:var(--ink);font-size:11px}
+.tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12px;box-shadow:0 4px 14px #0002;display:none;white-space:nowrap}
+.tip .d{color:var(--sub);margin-bottom:2px}
+.tip .r{display:flex;align-items:center;gap:6px}.tip .r b{font-variant-numeric:tabular-nums;min-width:64px;text-align:right}
+.tip .r i{width:12px;height:2px;border-radius:1px;display:inline-block}.tip .r span{color:var(--sub)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--sub);margin:4px 0 0}
+.legend i{display:inline-block;width:14px;height:2px;border-radius:1px;vertical-align:middle;margin-right:5px}
+.empty{color:var(--sub);font-size:13px;padding:14px;background:var(--chip);border-radius:10px}
+table.log{width:100%;border-collapse:collapse;font-size:13px}
+table.log th,table.log td{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left}
+table.log th{color:var(--sub);font-weight:500;font-size:12px}
+table.log td.num{text-align:right;font-variant-numeric:tabular-nums}
+</style></head><body>
+<header><h1>ディズニー・ロルカナ 買取価格比較（全シリーズ）</h1>
+<div class="note"><span id="date"></span> ・ ブラックフロッグ / カービット / ロルハッピー の3店比較（緑＝最高値）。カードをクリックすると価格の推移が見られます。「–」はその店の一覧に無いカード（ブラックフロッグは一覧外も最低価格ルールあり：画像にないエンチャンテッド1,500円・レジェンダリー10円・SR5円・レア2円）。価格は目安です。</div></header>
+<div class="bar"><div class="in" id="rar"></div><div class="in" style="margin-top:6px">
+<select id="set"></select>
+<button class="chip on" data-f="all">全加工</button><button class="chip" data-f="0">通常</button><button class="chip" data-f="1">FOIL</button>
+<select id="sort"><option value="max">最高値が高い順</option><option value="no">シリーズ・番号順</option><option value="diff">店舗間の価格差が大きい順</option><option value="rise">値上がり幅が大きい順</option><option value="fall">値下がり幅が大きい順</option></select>
+<select id="shop"><option value="">全店</option><option value="bf">ブラックフロッグが最高</option><option value="cb">カービットが最高</option><option value="lh">ロルハッピーが最高</option><option value="all3">3店とも掲載</option><option value="chg">値動きあり</option></select>
+<label class="lb">比較する日<select id="base"></select></label>
+<input id="q" placeholder="カード名で検索"><span id="cnt"></span></div></div>
+<main id="list"></main><button class="chip" id="more">もっと見る</button>
+<div id="modal" role="dialog" aria-modal="true"><div class="sheet" id="sheet"></div></div>
+<script>
+const D=__DATA__;
+const H=__HISTORY__;
+const META=__META__;
+const SHOPS=[['bf','ブラックフロッグ'],['cb','カービット'],['lh','ロルハッピー']];
+const ORDER=['アイコニック','エンチャンテッド','エピック','レジェンダリー','スーパーレア','レア','アンコモン','コモン','プロモ'];
+const SETO=['ハイペリアシティ','ヴァインズ・アタック！','未知なる彼方へ！','WINTERSPELL','WHISPERS IN THE WELL','物語のおもいで','ジャファーの王権','アーケイジアと魔法の島','大いなるアズライト','星々の輝き','逆襲のアースラ','インクランド探訪','フラッドボーンの渾沌','物語のはじまり','プロモ','英語版'];
+let rar='',foil='all',limit=120;const $=s=>document.querySelector(s);
+const fmt=v=>v==null?'–':'¥'+v.toLocaleString();
+const ESC={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>ESC[c]);
+const mx=d=>Math.max(...SHOPS.map(([k])=>d[k]||0));
+const LAST=H.dates.length-1;
+// ある日の価格 (変化点の記録から復元)
+function priceAt(id,k,i){const pts=(H.c[id]||{})[k];if(!pts)return null;let v=null;for(const [j,p] of pts){if(j>i)break;v=p}return v}
+// 比較する日からの変動
+function diffOf(d,k,b){if(b<0||d[k]==null)return 0;const p=priceAt(d.id,k,b);return p==null?0:d[k]-p}
+$('#date').textContent='取得日 '+META.date+'（記録 '+H.dates.length+'日分）';
+const baseSel=$('#base');
+if(LAST<1){baseSel.innerHTML='<option value="-1">記録が1日分のみ</option>';baseSel.disabled=true}
+else baseSel.innerHTML=H.dates.slice(0,LAST).map((d,i)=>`<option value="${i}">${d}</option>`).reverse().join('');
+const base=()=>+baseSel.value;
+const sets=SETO.filter(s=>D.some(d=>d.setname===s));$('#set').innerHTML='<option value="">全シリーズ</option>'+sets.map(s=>`<option>${s}</option>`).join('');
+const rb=$('#rar');['',...ORDER.filter(r=>D.some(d=>d.rar===r))].forEach(r=>{const b=document.createElement('button');b.className='chip'+(r===''?' on':'');b.textContent=r||'全レアリティ';b.onclick=()=>{rar=r;rb.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));reset()};rb.append(b)});
+document.querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{foil=b.dataset.f;document.querySelectorAll('[data-f]').forEach(x=>x.classList.toggle('on',x===b));reset()});
+['#sort','#set','#shop','#base'].forEach(s=>$(s).onchange=reset);$('#q').oninput=reset;$('#more').onclick=()=>{limit+=120;draw()};
+function reset(){limit=120;draw()}
+function wins(d){const v=SHOPS.filter(([k])=>d[k]!=null);if(v.length<2)return[];const m=mx(d);if(v.every(([k])=>d[k]===m))return[];return v.filter(([k])=>d[k]===m).map(([k])=>k)}
+const chg=v=>v?`<span class="${v>0?'up':'dn'}">${v>0?'▲':'▼'}${Math.abs(v).toLocaleString()}</span>`:'';
+let VIEW=[];
+function draw(){const q=$('#q').value.trim().normalize('NFKC').toLowerCase(),s=$('#sort').value,st=$('#set').value,sh=$('#shop').value,b=base();
+const dv=d=>SHOPS.map(([k])=>diffOf(d,k,b));
+let L=D.filter(d=>(!rar||d.rar===rar)&&(!st||d.setname===st)&&(foil==='all'||String(+d.foil)===foil)&&(!q||d.name.normalize('NFKC').toLowerCase().includes(q))
+ &&(!sh||(sh==='chg'?dv(d).some(x=>x):sh==='all3'?SHOPS.every(([k])=>d[k]!=null):wins(d).includes(sh))));
+const no=d=>parseInt(d.code)||9999,si=d=>SETO.indexOf(d.setname);
+const rng=d=>{const v=SHOPS.map(([k])=>d[k]).filter(x=>x!=null);return v.length>1?Math.max(...v)-Math.min(...v):0};
+const sorts={no:(a,c)=>si(a)-si(c)||no(a)-no(c)||a.foil-c.foil,diff:(a,c)=>rng(c)-rng(a),
+ rise:(a,c)=>Math.max(...dv(c))-Math.max(...dv(a))||mx(c)-mx(a),fall:(a,c)=>Math.min(...dv(a))-Math.min(...dv(c))||mx(c)-mx(a),max:(a,c)=>mx(c)-mx(a)};
+L.sort(sorts[s]);VIEW=L;
+$('#cnt').textContent=L.length.toLocaleString()+'件';
+$('#list').innerHTML=L.slice(0,limit).map((d,i)=>{const w=wins(d);
+return `<div class="c" tabindex="0" data-i="${i}"><img loading="lazy" src="${esc(d.img||'')}" alt="${esc(d.name)}"><div class="b"><div class="tag">${esc(d.setname)} ・ ${esc(d.rar)}${d.foil?' <span class="f">FOIL</span>':''}${d.code?' ・ '+esc(d.code):''}</div><div class="n">${esc(d.name)}</div><div class="p">${SHOPS.map(([k,n])=>`<span>${n}</span><span>${chg(diffOf(d,k,b))}<span class="${w.includes(k)?'w':''}">${fmt(d[k])}</span></span>`).join('')}</div></div></div>`}).join('');
+$('#more').style.display=L.length>limit?'block':'none';}
+
+// ---------- 詳細・推移 ----------
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function niceTicks(lo,hi,n=4){if(lo===hi){lo=Math.max(0,lo*0.8);hi=hi*1.2||10}const span=hi-lo,st0=span/n,mag=10**Math.floor(Math.log10(st0)),st=[1,2,2.5,5,10].map(m=>m*mag).find(m=>m>=st0);
+ const a=Math.floor(lo/st)*st,b=Math.ceil(hi/st)*st,t=[];for(let v=a;v<=b+st/2;v+=st)t.push(Math.round(v));return t}
+const yen=v=>v>=10000?(v/10000).toLocaleString()+'万':v.toLocaleString();
+function openCard(d){
+ const series=SHOPS.map(([k,n])=>({k,n,v:H.dates.map((_,i)=>priceAt(d.id,k,i))})).filter(s=>s.v.some(x=>x!=null));
+ const log=[];for(const s of series){let prev;s.v.forEach((v,i)=>{if(i>0&&v!==prev)log.push({i,n:s.n,k:s.k,v,prev});prev=v})}
+ log.sort((a,b)=>b.i-a.i);
+ const sh=$('#sheet');
+ sh.innerHTML=`<button class="close" aria-label="閉じる">×</button><div class="top"><img src="${esc(d.img||'')}" alt=""><div class="info">
+  <div class="tag">${esc(d.setname)} ・ ${esc(d.rar)}${d.foil?' <span class="f">FOIL</span>':''}${d.code?' ・ '+esc(d.code):''}</div><h2>${esc(d.name)}</h2>
+  <div class="now">${SHOPS.map(([k,n])=>`<span class="k" style="background:var(--s-${k})"></span><span>${n}</span><span class="v">${fmt(d[k])}</span>`).join('')}</div></div></div>
+  <h3>価格の推移</h3><div id="chartbox"></div>
+  <h3>変動の履歴</h3>${log.length?`<table class="log"><thead><tr><th>日付</th><th>店</th><th style="text-align:right">価格</th><th style="text-align:right">変動</th></tr></thead><tbody>${log.map(r=>`<tr><td>${H.dates[r.i]}</td><td>${r.n}</td><td class="num">${fmt(r.v)}</td><td class="num">${r.v==null?'一覧から消えた':r.prev==null?'一覧に追加':chg(r.v-r.prev)}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">記録期間中の値動きはありません。</div>'}`;
+ sh.querySelector('.close').onclick=closeModal;
+ $('#modal').classList.add('on');document.body.style.overflow='hidden';
+ drawChart($('#chartbox'),series);
+}
+function closeModal(){$('#modal').classList.remove('on');document.body.style.overflow=''}
+$('#modal').onclick=e=>{if(e.target.id==='modal')closeModal()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+$('#list').onclick=e=>{const c=e.target.closest('.c');if(c)openCard(VIEW[+c.dataset.i])};
+$('#list').onkeydown=e=>{if(e.key==='Enter'){const c=e.target.closest('.c');if(c)openCard(VIEW[+c.dataset.i])}};
+
+function drawChart(box,series){
+ if(H.dates.length<2){box.innerHTML='<div class="empty">記録はまだ1日分だけです。毎日の自動実行で推移がたまっていきます。</div>';return}
+ if(!series.length){box.innerHTML='<div class="empty">どの店にも価格の記録がありません。</div>';return}
+ const W=640,Ht=250,ml=52,mr=118,mt=12,mb=26,iw=W-ml-mr,ih=Ht-mt-mb;
+ const t=H.dates.map(s=>Date.parse(s)),t0=t[0],t1=t[t.length-1];
+ const X=i=>ml+(t1===t0?iw/2:(t[i]-t0)/(t1-t0)*iw);
+ const vals=series.flatMap(s=>s.v).filter(v=>v!=null),ticks=niceTicks(Math.min(...vals),Math.max(...vals));
+ const y0=ticks[0],y1=ticks[ticks.length-1],Y=v=>mt+ih-(v-y0)/(y1-y0||1)*ih;
+ let g='';
+ ticks.forEach(v=>{g+=`<line x1="${ml}" x2="${ml+iw}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)" stroke-width="1"/><text x="${ml-6}" y="${Y(v)+4}" text-anchor="end">${yen(v)}</text>`});
+ // X軸ラベル (最大6個)
+ const step=Math.max(1,Math.ceil(H.dates.length/6));
+ H.dates.forEach((s,i)=>{if(i%step===0||i===LAST)g+=`<text x="${X(i)}" y="${Ht-6}" text-anchor="middle">${s.slice(5).replace('-','/')}</text>`});
+ g+=`<line x1="${ml}" x2="${ml+iw}" y1="${mt+ih}" y2="${mt+ih}" stroke="var(--line)"/>`;
+ // 階段状の線 (価格は変わるまで同じ値が続く)
+ const ends=[];
+ series.forEach(s=>{let d='',pen=false;s.v.forEach((v,i)=>{if(v==null){pen=false;return}
+   if(!pen){d+=`M${X(i)},${Y(v)}`;pen=true}else{d+=`H${X(i)}V${Y(v)}`}});
+  g+=`<path d="${d}" fill="none" stroke="var(--s-${s.k})" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  s.v.forEach((v,i)=>{if(v!=null&&(i===0||s.v[i-1]!==v||i===LAST))g+=`<circle cx="${X(i)}" cy="${Y(v)}" r="4" fill="var(--s-${s.k})" stroke="var(--card)" stroke-width="2"/>`});
+  const li=s.v.map((v,i)=>v!=null?i:-1).filter(i=>i>=0).pop();if(li!=null)ends.push({s,y:Y(s.v[li]),x:X(li),v:s.v[li]})});
+ // 右端の直接ラベル (重ならないよう縦にずらす)
+ ends.sort((a,b)=>a.y-b.y);for(let i=1;i<ends.length;i++)if(ends[i].y-ends[i-1].y<14)ends[i].y=ends[i-1].y+14;
+ ends.forEach(e=>{g+=`<line x1="${ml+iw+6}" x2="${ml+iw+16}" y1="${e.y}" y2="${e.y}" stroke="var(--s-${e.s.k})" stroke-width="2"/><text class="lab" x="${ml+iw+20}" y="${e.y+4}">${e.s.n.replace('ブラックフロッグ','BF')} ${yen(e.v)}</text>`});
+ g+=`<line id="xh" y1="${mt}" y2="${mt+ih}" stroke="var(--muted)" stroke-width="1" visibility="hidden"/><rect id="hit" x="${ml}" y="${mt}" width="${iw}" height="${ih}" fill="transparent"/>`;
+ box.innerHTML=`<div class="chartwrap"><svg class="ch" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="価格の推移">${g}</svg><div class="tip"></div></div>
+  <div class="legend">${series.map(s=>`<span><i style="background:var(--s-${s.k})"></i>${s.n}</span>`).join('')}</div>`;
+ const svg=box.querySelector('svg'),tip=box.querySelector('.tip'),xh=box.querySelector('#xh');
+ const move=e=>{const r=svg.getBoundingClientRect(),px=(e.clientX-r.left)*W/r.width;let bi=0,bd=1e9;t.forEach((_,i)=>{const dd=Math.abs(X(i)-px);if(dd<bd){bd=dd;bi=i}});
+  xh.setAttribute('x1',X(bi));xh.setAttribute('x2',X(bi));xh.setAttribute('visibility','visible');
+  tip.innerHTML=`<div class="d">${H.dates[bi]}</div>`+series.map(s=>`<div class="r"><i style="background:var(--s-${s.k})"></i><b>${fmt(s.v[bi])}</b><span>${s.n}</span></div>`).join('');
+  tip.style.display='block';const sx=X(bi)*r.width/W;tip.style.left=Math.min(Math.max(sx-tip.offsetWidth/2,0),r.width-tip.offsetWidth)+'px';tip.style.top='-8px';tip.style.transform='translateY(-100%)'};
+ svg.addEventListener('pointermove',move);svg.addEventListener('pointerdown',move);
+ svg.addEventListener('pointerleave',()=>{tip.style.display='none';xh.setAttribute('visibility','hidden')});
+}
+draw();
+</script></body></html>

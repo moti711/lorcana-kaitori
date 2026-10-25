@@ -1,0 +1,52 @@
+name: ロルカナ買取価格を取得
+
+on:
+  schedule:
+    - cron: '0 23 * * *'   # 毎朝 8:00 (日本時間) ※混雑時は数十分遅れることがある
+  workflow_dispatch:        # スマホの GitHub アプリ等から手動実行
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: kaitori
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 取得・比較
+        run: python kaitori.py
+
+      - name: 価格の記録を保存
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add history
+          git diff --cached --quiet || git commit -m "価格の記録 $(TZ=Asia/Tokyo date +%F)"
+          git push
+
+      - name: ページを用意
+        run: |
+          mkdir -p _site
+          cp lorcana_kaitori_all.html _site/index.html
+          cp lorcana_kaitori_all.csv _site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

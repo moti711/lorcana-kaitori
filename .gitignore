@@ -1,0 +1,10 @@
+# 実行のたびに作り直すもの
+cache/
+logs/
+lorcana_kaitori_all.html
+lorcana_kaitori_all.csv
+_site/
+__pycache__/
+
+# 最初に作ったハイペリアシティだけの版
+hyperia_city_kaitori.*
