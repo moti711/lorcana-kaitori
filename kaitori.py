@@ -25,6 +25,7 @@ import re
 import sys
 import time
 import unicodedata
+import urllib.error
 import urllib.request
 
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -58,11 +59,30 @@ def log(*a):
     print(*a, flush=True)
 
 
-def get(url):
-    with urllib.request.urlopen(url, timeout=60) as r:
-        body = r.read().decode('utf-8', 'replace')
-    time.sleep(WAIT)
-    return body
+def warn(msg):
+    """ログに警告を出す。GitHub Actions 上では実行結果の画面にも表示される"""
+    log(('::warning::' if os.environ.get('GITHUB_ACTIONS') else '警告: ') + msg)
+
+
+def get(url, tries=3):
+    """一時的なエラー (タイムアウト・混雑など) は間をあけてやり直す"""
+    for n in range(1, tries + 1):
+        try:
+            with urllib.request.urlopen(url, timeout=60) as r:
+                body = r.read().decode('utf-8', 'replace')
+            time.sleep(WAIT)
+            return body
+        except urllib.error.HTTPError as e:
+            if e.code == 404 or n == tries:
+                raise
+            err = f'HTTP {e.code}'
+        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
+            if n == tries:
+                raise
+            err = str(e)
+        wait = 10 * 3 ** (n - 1)  # 10秒, 30秒
+        log(f'    アクセス失敗 ({err}) {wait}秒後にやり直し {n}/{tries - 1}: {url}')
+        time.sleep(wait)
 
 
 # ---------------------------------------------------------------- 取得
@@ -134,13 +154,21 @@ def fetch_carbbit():
 
 
 def fetch_all():
+    """店ごとに取得する。失敗した店があっても残りの店は続ける。失敗した店のキーを返す"""
     os.makedirs(CACHE, exist_ok=True)
-    log('ブラックフロッグを取得中…')
-    json.dump(fetch_blackfrog(), open(os.path.join(CACHE, 'bf.json'), 'w', encoding='utf-8'), ensure_ascii=False)
-    log('ロルハッピーを取得中…')
-    json.dump(fetch_lorhappy(), open(os.path.join(CACHE, 'lh.json'), 'w', encoding='utf-8'), ensure_ascii=False)
-    log('カービットを取得中…')
-    open(os.path.join(CACHE, 'cb.csv'), 'w', encoding='utf-8').write(fetch_carbbit())
+    jobs = [('bf', 'bf.json', fetch_blackfrog), ('lh', 'lh.json', fetch_lorhappy), ('cb', 'cb.csv', fetch_carbbit)]
+    failed = set()
+    for key, fname, fetch in jobs:
+        log(f'{SHOPS[key]}を取得中…')
+        try:
+            data = fetch()
+        except Exception as e:  # 1店の失敗で全体を止めない
+            warn(f'{SHOPS[key]}の取得に失敗しました: {type(e).__name__}: {e}')
+            failed.add(key)
+            data = '' if fname.endswith('.csv') else []
+        with open(os.path.join(CACHE, fname), 'w', encoding='utf-8') as f:
+            f.write(data) if isinstance(data, str) else json.dump(data, f, ensure_ascii=False)
+    return failed
 
 
 # ---------------------------------------------------------------- 照合
@@ -282,13 +310,38 @@ def best_shop(x):
     return '/'.join(SHOPS[k] for k in v if v[k] == m)
 
 
-def add_changes(cards, today):
-    """前回スナップショットとの差分を付ける"""
+def load_prev(today):
+    """今日より前で一番新しいスナップショットを (日付, {id: 記録}) で返す"""
     snaps = sorted(p for p in glob.glob(os.path.join(HISTORY, '*.json'))
                    if os.path.basename(p) < today + '.json')
     if not snaps:
-        return None
-    prev = {c['id']: c for c in json.load(open(snaps[-1], encoding='utf-8'))}
+        return None, {}
+    return os.path.basename(snaps[-1])[:-5], {c['id']: c for c in json.load(open(snaps[-1], encoding='utf-8'))}
+
+
+def check_and_fill(cards, prev, failed):
+    """件数が前回の半分未満の店も失敗扱いにし、失敗した店の価格は前回の値で埋める"""
+    for k in SHOPS:
+        if k in failed or not prev:
+            continue
+        n_now = sum(1 for c in cards if k in c)
+        n_prev = sum(1 for p in prev.values() if k in p)
+        if n_prev and n_now < n_prev * 0.5:
+            warn(f'{SHOPS[k]}の件数が前回の半分未満です ({n_prev} → {n_now} 件)。サイトの変更などの可能性があるため前回の値を使います')
+            failed.add(k)
+    if not failed:
+        return cards
+    for c in cards:
+        p = prev.get(c['id'], {})
+        for k in failed:
+            c.pop(k, None)
+            if k in p:
+                c[k] = p[k]
+    return [c for c in cards if any(k in c for k in SHOPS)]
+
+
+def add_changes(cards, prev):
+    """前回スナップショットとの差分を付ける"""
     for c in cards:
         p = prev.get(c['id'])
         if not p:
@@ -296,7 +349,6 @@ def add_changes(cards, today):
         diff = {k: c[k] - p[k] for k in SHOPS if k in c and k in p and c[k] != p[k]}
         if diff:
             c['diff'] = diff
-    return os.path.basename(snaps[-1])[:-5]
 
 
 def build_history(cards):
@@ -322,7 +374,7 @@ def build_history(cards):
     return {'dates': dates, 'c': series}
 
 
-def write_outputs(cards, today, prev_date):
+def write_outputs(cards, today, prev_date, failed):
     cards.sort(key=lambda x: (SET_ORDER.index(x['setname']) if x['setname'] in SET_ORDER else 99,
                               RAR_ORDER.index(x['rar']) if x['rar'] in RAR_ORDER else 99,
                               x['foil'], -max(x.get(k, 0) for k in SHOPS)))
@@ -336,7 +388,8 @@ def write_outputs(cards, today, prev_date):
                         *[x.get(k, '-') for k in SHOPS], best_shop(x),
                         *[f'{diff[k]:+d}' if k in diff else '' for k in SHOPS], x.get('img', '')])
     data = json.dumps(cards, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
-    meta = json.dumps({'date': today, 'prev': prev_date}, ensure_ascii=False)
+    meta = json.dumps({'date': today, 'prev': prev_date, 'failed': [SHOPS[k] for k in SHOPS if k in failed]},
+                      ensure_ascii=False)
     hist = json.dumps(build_history(cards), ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
     page = (open(TEMPLATE, encoding='utf-8').read()
             .replace('__DATA__', data).replace('__HISTORY__', hist).replace('__META__', meta))
@@ -350,19 +403,31 @@ def main():
     args = ap.parse_args()
     # GitHub Actions は UTC で動くので、日付は日本時間で数える
     today = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date().isoformat()
-    if not args.no_fetch:
-        fetch_all()
+    failed = set() if args.no_fetch else fetch_all()
     cards = merge()
     os.makedirs(HISTORY, exist_ok=True)
-    prev_date = add_changes(cards, today)
-    snap = [{k: v for k, v in c.items() if k in ('id', 'name', *SHOPS)} for c in cards]
-    json.dump(snap, open(os.path.join(HISTORY, today + '.json'), 'w', encoding='utf-8'), ensure_ascii=False)
-    write_outputs(cards, today, prev_date)
+    prev_date, prev = load_prev(today)
+    cards = check_and_fill(cards, prev, failed)
+    if len(failed) == len(SHOPS) or not cards:
+        log('全店の取得に失敗したため、記録とページは更新しません')
+        sys.exit(1)
+    add_changes(cards, prev)
+    snap = {c['id']: {k: v for k, v in c.items() if k in ('id', 'name', *SHOPS)} for c in cards}
+    # 失敗した店の記録は前回分を引き継ぐ (推移グラフに「消えた→戻った」のノイズを出さないため)
+    for cid, p in prev.items():
+        for k in failed:
+            if k in p:
+                snap.setdefault(cid, {'id': cid, 'name': p.get('name', '')})[k] = p[k]
+    json.dump(list(snap.values()), open(os.path.join(HISTORY, today + '.json'), 'w', encoding='utf-8'),
+              ensure_ascii=False)
+    write_outputs(cards, today, prev_date, failed)
     wins = collections.Counter(best_shop(c) for c in cards)
     changed = sum(1 for c in cards if 'diff' in c)
     log('最高値の店: ' + ', '.join(f'{k} {v}' for k, v in wins.most_common()))
     if prev_date:
         log(f'前回 ({prev_date}) から価格が変わったカード: {changed} 件')
+    if failed:
+        log('取得に失敗した店 (前回の値を使用): ' + '・'.join(SHOPS[k] for k in SHOPS if k in failed))
     log('出力: ' + os.path.join(BASE, 'lorcana_kaitori_all.html'))
 
 

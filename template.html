@@ -27,6 +27,8 @@ main{max-width:1280px;margin:auto;padding:14px 16px 20px;display:grid;grid-templ
 .p .w{color:var(--win);font-weight:700;background:var(--winbg);border-radius:4px;padding:0 4px}
 .up{color:var(--up);font-size:10px;margin-right:3px}.dn{color:var(--dn);font-size:10px;margin-right:3px}
 #cnt{color:var(--sub);font-size:12px;margin-left:auto}
+.warnbox{margin-top:8px;padding:8px 12px;border-radius:8px;font-size:13px;background:#fff4e5;color:#7a4100;border:1px solid #f5c98a}
+@media (prefers-color-scheme:dark){.warnbox{background:#3a2a12;color:#f5c98a;border-color:#6b4a1c}}
 #more{display:block;margin:0 auto 40px;padding:8px 20px}
 /* 詳細モーダル */
 #modal{position:fixed;inset:0;background:#0009;display:none;align-items:flex-start;justify-content:center;z-index:9;overflow:auto;padding:24px 16px}
@@ -86,6 +88,7 @@ function priceAt(id,k,i){const pts=(H.c[id]||{})[k];if(!pts)return null;let v=nu
 // 比較する日からの変動
 function diffOf(d,k,b){if(b<0||d[k]==null)return 0;const p=priceAt(d.id,k,b);return p==null?0:d[k]-p}
 $('#date').textContent='取得日 '+META.date+'（記録 '+H.dates.length+'日分）';
+if(META.failed&&META.failed.length){const w=document.createElement('div');w.className='warnbox';w.textContent='⚠ '+META.failed.join('・')+' は今回の取得に失敗したため、前回の価格を表示しています。';$('header').append(w)}
 const baseSel=$('#base');
 if(LAST<1){baseSel.innerHTML='<option value="-1">記録が1日分のみ</option>';baseSel.disabled=true}
 else baseSel.innerHTML=H.dates.slice(0,LAST).map((d,i)=>`<option value="${i}">${d}</option>`).reverse().join('');
